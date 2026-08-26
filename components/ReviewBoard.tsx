@@ -51,7 +51,8 @@ export default function ReviewBoard() {
     setDateQuery(event.target.value);
   }
 
-  function handleSearch() {
+  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setPage(1);
     fetchReviews(titleQuery, dateQuery, 1);
   }
@@ -77,7 +78,7 @@ export default function ReviewBoard() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-center gap-2">
+      <form className="flex flex-wrap items-center gap-2" onSubmit={handleSearchSubmit}>
         <input
           className="rounded border border-zinc-300 px-3 py-2"
           placeholder="제목 조회 조건"
@@ -90,7 +91,7 @@ export default function ReviewBoard() {
           value={dateQuery}
           onChange={handleDateQueryChange}
         />
-        <button type="button" className="rounded bg-zinc-900 px-4 py-2 text-white" onClick={handleSearch}>
+        <button type="submit" className="rounded bg-zinc-900 px-4 py-2 text-white">
           조회
         </button>
         <button
@@ -100,7 +101,7 @@ export default function ReviewBoard() {
         >
           새 감상평 작성
         </button>
-      </div>
+      </form>
 
       <ReviewGrid reviews={reviews} onSelect={handleSelectReview} />
 
