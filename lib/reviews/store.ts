@@ -195,6 +195,7 @@ async function uploadReviewImage(
 
   const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, buffer, {
     contentType,
+    upsert: true,
   });
   if (error) {
     throw new Error(error.message);
