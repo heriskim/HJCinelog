@@ -53,3 +53,9 @@ create policy "delete_own_images" on storage.objects
     bucket_id = 'review-images'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+create policy "update_own_images" on storage.objects
+  for update using (
+    bucket_id = 'review-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
