@@ -5,6 +5,7 @@ export interface Review {
   review: string;
   oneLiner: string;
   createdAt: string;
+  image?: string;
 }
 
 export interface ReviewInput {
@@ -12,4 +13,5 @@ export interface ReviewInput {
   rating: number;
   review: string;
   oneLiner: string;
+  image?: string;
 }

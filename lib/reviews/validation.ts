@@ -7,6 +7,7 @@ const ONE_LINER_MAX_LENGTH = 100;
 const RATING_MIN = 1;
 const RATING_MAX = 5;
 const RATING_STEP = 0.5;
+export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 
 export function validateReviewInput(input: ReviewInput): void {
   if (!input.title.trim()) {
@@ -28,6 +29,17 @@ export function validateReviewInput(input: ReviewInput): void {
   }
   if (input.oneLiner.length > ONE_LINER_MAX_LENGTH) {
     throw new ReviewValidationError(`한줄평은 최대 ${ONE_LINER_MAX_LENGTH}자까지 입력할 수 있습니다.`);
+  }
+  if (input.image) {
+    validateImage(input.image);
+  }
+}
+
+function validateImage(image: string): void {
+  const base64 = image.includes(",") ? image.slice(image.indexOf(",") + 1) : image;
+  const sizeInBytes = Math.floor((base64.length * 3) / 4);
+  if (sizeInBytes > IMAGE_MAX_BYTES) {
+    throw new ReviewValidationError("이미지는 최대 10MB까지 등록할 수 있습니다.");
   }
 }
 

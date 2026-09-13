@@ -5,10 +5,12 @@
 ## 기술스택
 - Next.js, TypeScript
 - Tailwind CSS 
+- Supabase (Auth / Database / Storage)
 - 테스트 : Jest + Testing Library 
 - FE 단일 프로젝트
 
 ## 주요 기능
+- 로그인 / 회원가입
 - 감상평 작성
 - 감상평 조회
 - 감상평 수정
@@ -23,6 +25,7 @@
 2. @PRD.md를 참고해서 프로젝트에 대한 기본 정보를 인식해. 
 3. 각 기능은 아래 작성한 기능 명세를 참고해서 진행해줘. 
 SDD 폴더 하위에 있어.
+로그인/회원가입 : @SDD/로그인기능명세.md
 감상평 작성 : @SDD/감상평작성기능명세.md
 감상평 조회 : @SDD/감상평조회기능명세.md
 감상평 수정 : @SDD/감상평수정기능명세.md
@@ -46,3 +49,12 @@ SDD 폴더 하위에 있어.
 - 코드 주석 : 한국어
 - 커밋 메시지 : 한국어 
 - 문서화 : 한국어 
+
+## TMDB API 
+- API Read Access Token / API Key는 `.env.local`에 보관 (TMDB_API_ACCESS_TOKEN, TMDB_API_KEY)
+
+## Supabase
+- Auth: 이메일/비밀번호 로그인만 지원. 감상평은 로그인한 사용자 본인 것만 조회/작성/수정/삭제 가능(RLS)
+- DB: reviews 테이블(복합 PK user_id+id), RLS로 사용자별 데이터 격리
+- Storage: review-images 버킷(비공개)에 이미지 저장, DB에는 경로만 저장, 조회 시 서버가 signed URL 발급
+- 환경변수: SUPABASE_URL / SUPABASE_API_KEY / SUPABASE_SECRET_KEY(`.env.local`, 서버 전용) + NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY(브라우저 노출용). SUPABASE_SECRET_KEY는 절대 NEXT_PUBLIC_ 접두사를 붙이지 않는다.

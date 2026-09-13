@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { IMAGE_MAX_BYTES } from "@/lib/reviews/validation";
 import type { Review, ReviewInput } from "@/lib/reviews/types";
+import AlertDialog from "./AlertDialog";
+import PosterSearchModal from "./PosterSearchModal";
+import PosterSourceModal from "./PosterSourceModal";
 import StarRating from "./StarRating";
 
 interface ReviewFormModalProps {
@@ -11,13 +15,19 @@ interface ReviewFormModalProps {
   onSaved: (review: Review) => void;
 }
 
+type PosterModalState = "none" | "source" | "search";
+
 export default function ReviewFormModal({ mode, initialData, onClose, onSaved }: ReviewFormModalProps) {
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [rating, setRating] = useState(initialData?.rating ?? 5);
   const [reviewText, setReviewText] = useState(initialData?.review ?? "");
   const [oneLiner, setOneLiner] = useState(initialData?.oneLiner ?? "");
+  const [image, setImage] = useState(initialData?.image);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [posterModalState, setPosterModalState] = useState<PosterModalState>("none");
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleTitleChange(event: React.ChangeEvent<HTMLInputElement>) {
     setTitle(event.target.value);
@@ -31,10 +41,55 @@ export default function ReviewFormModal({ mode, initialData, onClose, onSaved }:
     setOneLiner(event.target.value);
   }
 
+  function handlePosterFrameClick() {
+    setPosterModalState("source");
+  }
+
+  function handleSelectLocalSource() {
+    setPosterModalState("none");
+    fileInputRef.current?.click();
+  }
+
+  function handleSelectApiSource() {
+    setPosterModalState("search");
+  }
+
+  function handlePosterModalCancel() {
+    setPosterModalState("none");
+  }
+
+  function handlePosterSearchError(message: string) {
+    setPosterModalState("none");
+    setAlertMessage(message);
+  }
+
+  function handlePosterSearchConfirm(imageDataUrl: string) {
+    setImage(imageDataUrl);
+    setPosterModalState("none");
+  }
+
+  async function handleFileInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+    if (file.size > IMAGE_MAX_BYTES) {
+      setAlertMessage("이미지는 최대 10MB까지 등록할 수 있습니다.");
+      return;
+    }
+    const dataUrl = await readFileAsDataUrl(file);
+    setImage(dataUrl);
+  }
+
+  function handleAlertClose() {
+    setAlertMessage(null);
+  }
+
   async function handleSave() {
     setIsSaving(true);
     setErrorMessage(null);
-    const input: ReviewInput = { title, rating, review: reviewText, oneLiner };
+    const input: ReviewInput = { title, rating, review: reviewText, oneLiner, image };
     try {
       const endpoint = mode === "create" ? "/api/reviews" : `/api/reviews/${initialData?.id}`;
       const method = mode === "create" ? "POST" : "PUT";
@@ -69,13 +124,38 @@ export default function ReviewFormModal({ mode, initialData, onClose, onSaved }:
           />
           <StarRating value={rating} onChange={setRating} />
         </div>
-        <textarea
-          className="mb-4 h-64 w-full resize-none rounded border border-zinc-300 p-3"
-          placeholder="감상평"
-          value={reviewText}
-          maxLength={2000}
-          onChange={handleReviewChange}
-        />
+        <div className="mb-4 flex gap-4">
+          <button
+            type="button"
+            className="h-64 w-40 flex-shrink-0 overflow-hidden rounded border border-zinc-300"
+            onClick={handlePosterFrameClick}
+          >
+            {image ? (
+              // eslint-disable-next-line @next/next/no-img-element -- 로컬/외부에서 불러온 이미지 미리보기
+              <img src={image} alt="감상평 이미지" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-sm text-zinc-400">
+                감상평 이미지
+                <br />
+                (클릭하여 등록)
+              </span>
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileInputChange}
+          />
+          <textarea
+            className="h-64 flex-1 resize-none rounded border border-zinc-300 p-3"
+            placeholder="감상평"
+            value={reviewText}
+            maxLength={2000}
+            onChange={handleReviewChange}
+          />
+        </div>
         <input
           className="mb-4 w-full rounded border border-zinc-300 px-3 py-2"
           placeholder="한줄평"
@@ -98,6 +178,33 @@ export default function ReviewFormModal({ mode, initialData, onClose, onSaved }:
           </button>
         </div>
       </div>
+
+      {posterModalState === "source" ? (
+        <PosterSourceModal
+          onSelectLocal={handleSelectLocalSource}
+          onSelectApi={handleSelectApiSource}
+          onCancel={handlePosterModalCancel}
+        />
+      ) : null}
+
+      {posterModalState === "search" ? (
+        <PosterSearchModal
+          onConfirm={handlePosterSearchConfirm}
+          onCancel={handlePosterModalCancel}
+          onError={handlePosterSearchError}
+        />
+      ) : null}
+
+      {alertMessage ? <AlertDialog message={alertMessage} onClose={handleAlertClose} /> : null}
     </div>
   );
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }

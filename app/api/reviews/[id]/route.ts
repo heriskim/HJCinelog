@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { ReviewNotFoundError, ReviewValidationError } from "@/lib/reviews/errors";
-import { findReviewById, updateReview } from "@/lib/reviews/store";
+import { deleteReview, findReviewById, updateReview } from "@/lib/reviews/store";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function GET(_request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    return NextResponse.json({ message: "로그인이 필요합니다." }, { status: 401 });
+  }
+
   const { id } = await params;
   const review = await findReviewById(id);
   if (!review) {
@@ -16,6 +22,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    return NextResponse.json({ message: "로그인이 필요합니다." }, { status: 401 });
+  }
+
   const { id } = await params;
   try {
     const input = await request.json();
@@ -27,6 +38,24 @@ export async function PUT(request: NextRequest, { params }: RouteParams): Promis
     }
     if (error instanceof ReviewValidationError) {
       return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+    throw error;
+  }
+}
+
+export async function DELETE(_request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    return NextResponse.json({ message: "로그인이 필요합니다." }, { status: 401 });
+  }
+
+  const { id } = await params;
+  try {
+    await deleteReview(id);
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    if (error instanceof ReviewNotFoundError) {
+      return NextResponse.json({ message: error.message }, { status: 404 });
     }
     throw error;
   }

@@ -45,4 +45,15 @@ describe("validateReviewInput", () => {
       ReviewValidationError
     );
   });
+
+  test("이미지가 없으면 통과한다", () => {
+    expect(() => validateReviewInput(buildInput({ image: undefined }))).not.toThrow();
+  });
+
+  test("이미지가 10MB를 초과하면 에러를 던진다", () => {
+    const oversizedBase64 = "A".repeat(15 * 1024 * 1024);
+    expect(() =>
+      validateReviewInput(buildInput({ image: `data:image/png;base64,${oversizedBase64}` }))
+    ).toThrow(ReviewValidationError);
+  });
 });
