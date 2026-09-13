@@ -39,9 +39,17 @@ SDD 폴더 하위에 있어.
 - 함수명/변수명은 코드 표준 준수
 
 
+## Git 저장소
+- 원격 저장소 : https://github.com/heriskim/HJCinelog.git
+- 기본/배포 브랜치 : master
+
 ## 커밋규칙 
 - Conventioanl Commits 형식 필수(feat/fix/docs/refactor/test)
 - PR 제목도 동일한 형식 적용 
+
+## 배포 요청 시 규칙
+- 사용자가 "배포"를 요청하면, 해당 기능에 대한 브랜치를 새로 만들고 master 브랜치로 PR을 생성하는 것까지만 진행한다.
+- PR 생성 이후의 merge/실제 배포는 진행하지 않는다.
 
 ## 금지사항
 .env는 절대 커밋 금지
